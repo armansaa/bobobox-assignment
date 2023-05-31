@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+  namespace: default
+  labels:
+    app: my-app
+    name: my-app
+    keel.sh/approvals: "1"
+    keel.sh/policy: major
+    keel.sh/trigger: poll
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      imagePullSecrets:
+        - name: gcr-json-key
+      containers:
+      - name: my-app
+        image: gcr.io/my-project/my-app:0.1.1-dev
+        resources:
+          limits:
+            cpu: "500m"
+            memory: 1000Mi
+          requests:
+            cpu: "250m"
+            memory: 200Mi
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: tz-data
+          mountPath: /etc/localtime
+        - name: timezone
+          mountPath: /etc/timezone
+        env:
+        - name: PORT
+          value: "8080"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: NotIn
+                values:
+                - pool-dml2crx9q-q0f16
+                - pool-dml2crx9q-q0y3e
+                - pool-dml2crx9q-q0y89
+                - pool-dml2crx9q-q0yc5
+                - pool-fbxrpree3-q0f65
+                - pool-fbxrpree3-q0fpk
+                - pool-fbxrpree3-q0f4s
+                - pool-fbxrpree3-q0fd7
+                - pool-fbxrpree3-q0f0a
+      volumes:
+      - name: tz-data
+        hostPath:
+          path: /usr/share/zoneinfo/Asia/Jakarta
+      - hostPath:
+          path: /etc/timezone
+          type: ""
+        name: timezone
